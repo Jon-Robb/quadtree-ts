@@ -9,7 +9,7 @@ interface Props {
   points: { x: number, y: number }[];
 }
 
-const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints, points }) => {
+export const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints, points }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

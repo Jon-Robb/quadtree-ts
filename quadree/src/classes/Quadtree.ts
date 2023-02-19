@@ -1,10 +1,12 @@
+import DoublyLinkedList from "./DoublyLinkedList";
+
 interface Point {
   x: number;
   y: number;
 }
 
 export default class Quadtree {
-  private points: Point[] = [];
+  private points: DoublyLinkedList<Point> = new DoublyLinkedList();
   private maxDepth: number;
   private maxPoints: number;
   private bounds: { x: number, y: number, width: number, height: number };
@@ -21,8 +23,8 @@ export default class Quadtree {
       return false;
     }
 
-    if (this.points.length < this.maxPoints || depth >= this.maxDepth) {
-      this.points.push(point);
+    if (this.points.getSize() < this.maxPoints || depth >= this.maxDepth) {
+      this.points.addLast(point);
       return true;
     }
 
@@ -68,7 +70,7 @@ export default class Quadtree {
 
       for (const point of node.points) {
         ctx.fillStyle = '#ff0000';
-        ctx.fillRect(point.x, point.y, 1, 1);
+        ctx.fillRect(point.data.x, point.data.y, 1, 1);
       }
     } else {
       for (const child of node.children) {
