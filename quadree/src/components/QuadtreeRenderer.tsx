@@ -24,6 +24,7 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
         quadtree.insert(point);
       }
       quadtree.render(canvas);
+      console.log(quadtree);
     }
   }, [canvasRef, width, height, maxDepth, maxPoints, points]);
 
