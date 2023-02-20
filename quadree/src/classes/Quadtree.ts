@@ -1,12 +1,14 @@
 import DoublyLinkedList from "./DoublyLinkedList";
 
-interface Point {
+export default interface GameObject {
   x: number;
   y: number;
+  bottom: number;
+  right: number;
 }
 
 export default class Quadtree {
-  private points: DoublyLinkedList<Point> = new DoublyLinkedList();
+  private objects: DoublyLinkedList<GameObject> = new DoublyLinkedList();
   private maxDepth: number;
   private maxPoints: number;
   private bounds: { x: number, y: number, width: number, height: number };
@@ -18,13 +20,13 @@ export default class Quadtree {
     this.maxPoints = maxPoints;
   }
 
-  insert(point: Point, depth = 0) {
-    if (!this.contains(point)) {
+  insert(object: GameObject, depth = 0) {
+    if (!this.contains(object)) {
       return false;
     }
 
-    if (this.points.getSize() < this.maxPoints || depth >= this.maxDepth) {
-      this.points.addLast(point);
+    if (this.objects.getSize() < this.maxPoints || depth >= this.maxDepth) {
+      this.objects.addLast(object);
       return true;
     }
 
@@ -33,7 +35,7 @@ export default class Quadtree {
     }
 
     for (const child of this.children) {
-      if (child.insert(point, depth + 1)) {
+      if (child.insert(object, depth + 1)) {
         return true;
       }
     }
@@ -52,10 +54,21 @@ export default class Quadtree {
     this.children.push(new Quadtree({ x: x + halfWidth, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxPoints));
   }
 
-  private contains(point: Point) {
-    return point.x >= this.bounds.x && point.x < this.bounds.x + this.bounds.width &&
-           point.y >= this.bounds.y && point.y < this.bounds.y + this.bounds.height;
+  private contains(object: GameObject) {
+    const { x, y, bottom, right } = object;
+    const { x: boundsX, y: boundsY, width, height } = this.bounds;
+
+    if (x + right < boundsX || x > boundsX + width) {
+      return false;
+    }
+
+    if (y + bottom < boundsY || y > boundsY + height) {
+      return false;
+    }
+
+    return true;
   }
+
 
   render(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
@@ -68,9 +81,11 @@ export default class Quadtree {
       ctx.strokeStyle = '#000000';
       ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
 
-      for (const point of node.points) {
+      for (const object of node.objects) {
         ctx.fillStyle = '#ff0000';
-        ctx.fillRect(point.data.x, point.data.y, 1, 1);
+        const width = object.data.right - object.data.x;
+        const height = object.data.bottom - object.data.y;
+        ctx.fillRect(object.data.x, object.data.y, width, height);
       }
     } else {
       for (const child of node.children) {
