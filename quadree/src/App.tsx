@@ -6,8 +6,12 @@ import QuadtreeRenderer from './components/QuadtreeRenderer';
 function App() {
   const points  = [] 
 
-  for (let i = 0; i < 1000; i++) {
-    points.push({x: Math.random() * 800, y: Math.random() * 600})
+  for (let i = 0; i < 50; i++) {
+    const x = 500
+    const y = 500
+    const width = 10
+    const height = 10
+    points.push({ x, y, width, height })
   }
 
   return (
