@@ -34,14 +34,14 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       insertloop();
 
 
-      const removeLoop = () => {
-        points.forEach((point) => {
-          quadtree.removeObject(point);
-          quadtree.render(canvas);
-        }
-        )
-      }
-        removeLoop()
+      // const removeLoop = () => {
+      //   points.forEach((point) => {
+      //     quadtree.removeObject(point);
+      //     quadtree.render(canvas);
+      //   }
+      //   )
+      // }
+      //   removeLoop()
       // for (const point of points) {
       //   quadtree.insert(point);
       // }
