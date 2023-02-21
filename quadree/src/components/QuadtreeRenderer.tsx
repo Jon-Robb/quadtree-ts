@@ -22,16 +22,31 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       const quadtree = new Quadtree({ x: 0, y: 0, width: width, height: height }, maxDepth, maxPoints);
       //quadtreeRef.current = quadtree;
       // Insert the points into the quadtree
-      let i = 0;
-      const insertloop = () => {
-        if (i < points.length) {
-          quadtree.insert(points[i]);
+      // let i = 0;
+      // const insertloop = () => {
+      //   if (i < points.length) {
+      //     quadtree.insert(points[i]);
+      //     quadtree.render(canvas);
+      //     i++;
+      //     setTimeout(insertloop, 100);
+      //   }
+      // }
+      // insertloop();
+
+      points.forEach((point) => {
+        quadtree.insert(point);
+      })
+      //quadtree.render(canvas);
+
+      const removeLoop = () => {
+        points.forEach((point) => {
+          quadtree.removeObject(point);
           quadtree.render(canvas);
-          i++;
-          setTimeout(insertloop, 100);
+          setTimeout(removeLoop, 100);
         }
+        )
       }
-      insertloop();
+      removeLoop()
 
 
       // const removeLoop = () => {

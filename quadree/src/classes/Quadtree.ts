@@ -174,16 +174,13 @@ export default class Quadtree {
       return null;
     }
     if (this.children.length === 0) {
-      console.log(this)
       return this;
     }
     const index = this.getIndex(object);
     if (index !== -1) {
-      console.log(this.children[index])
       return this.children[index];
       
     } else {
-      console.log(this)
       return this;
     }
   }
@@ -312,11 +309,11 @@ export default class Quadtree {
     }
 
     // Draw a rectangle for this node
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = 'black';
     ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
 
     // Draw a label for this node showing the number of objects it containsObject
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.font = '12px Arial';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
@@ -422,19 +419,19 @@ export default class Quadtree {
 // console.log(quadtree.containsObject(obj2)); // should log true
 // console.log(quadtree.objects.contains(obj1)); // should log false
 
-const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-const object1:Object = { x: 10, y: 10, width: 10, height: 10 };
-const object2:Object = { x: 60, y: 10, width: 10, height: 10 };
-const object3:Object = { x: 10, y: 60, width: 10, height: 10 };
-const object4:Object = { x: 60, y: 60, width: 10, height: 10 };
-for (const obj of [object1, object2, object3, object4]) {
-  quadtree.insert(obj);
-}
-console.log(quadtree.getIndex(object1)); // should return 0
-console.log(quadtree.getIndex(object2)); // should return 1
-console.log(quadtree.getIndex(object3)); // should return 2
-console.log(quadtree.getIndex(object4)); // should return 3
-console.log(quadtree.objects); // should output 4 objects
-console.log(quadtree.containsObject(object1)); // should output true
-console.log(quadtree.removeObject(object1)); // should output true
-console.log(quadtree.objects); // should output 3 objects
+// const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
+// const object1:Object = { x: 10, y: 10, width: 10, height: 10 };
+// const object2:Object = { x: 60, y: 10, width: 10, height: 10 };
+// const object3:Object = { x: 10, y: 60, width: 10, height: 10 };
+// const object4:Object = { x: 60, y: 60, width: 10, height: 10 };
+// for (const obj of [object1, object2, object3, object4]) {
+//   quadtree.insert(obj);
+// }
+// console.log(quadtree.getIndex(object1)); // should return 0
+// console.log(quadtree.getIndex(object2)); // should return 1
+// console.log(quadtree.getIndex(object3)); // should return 2
+// console.log(quadtree.getIndex(object4)); // should return 3
+// console.log(quadtree.objects); // should output 4 objects
+// console.log(quadtree.containsObject(object1)); // should output true
+// console.log(quadtree.removeObject(object1)); // should output true
+// console.log(quadtree.objects); // should output 3 objects
