@@ -28,7 +28,7 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
           quadtree.insert(points[i]);
           quadtree.render(canvas);
           i++;
-          setTimeout(insertloop, 100);
+          //setTimeout(insertloop, 100);
         }
       }
       insertloop();
