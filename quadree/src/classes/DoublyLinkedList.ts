@@ -96,6 +96,15 @@ export default class DoublyLinkedList<T> {
         this.size = 0;
     }
 
+    public getHead(): DoublyLinkedListNode<T> | null {
+        return this.head;
+    }
+
+    public getTail(): DoublyLinkedListNode<T> | null {
+        return this.tail;
+    }
+    
+
     public getSize(): number {
         return this.size;
     }
