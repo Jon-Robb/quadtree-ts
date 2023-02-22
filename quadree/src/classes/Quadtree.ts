@@ -309,11 +309,11 @@ export default class Quadtree {
     }
 
     // Draw a rectangle for this node
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = 'black';
     ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
 
     // Draw a label for this node showing the number of objects it containsObject
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.font = '12px Arial';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
