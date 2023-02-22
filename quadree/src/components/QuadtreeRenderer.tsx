@@ -20,8 +20,7 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       const quadtree = new Quadtree({ x: 0, y: 0, width: width, height: height }, maxDepth, maxPoints);
-      //quadtreeRef.current = quadtree;
-      // Insert the points into the quadtree
+
       let i = 0;
       const insertloop = () => {
         if (i < points.length) {
@@ -31,40 +30,23 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
           setTimeout(insertloop, 100);
         }
       }
-      insertloop();
+      for (let i = 0; i < points.length; i++) {
+        quadtree.insert(points[i]);
+      }
 
+      const removeloop = () => {
+        if (i < points.length) {
+          quadtree.removeObject(points[i]);
+          quadtree.render(canvas);
+          i++;
+          setTimeout(removeloop, 100);
+          console.log("removing" + points[i]);
+        }
+      }
+      removeloop();
 
-      // const removeLoop = () => {
-      //   points.forEach((point) => {
-      //     quadtree.removeObject(point);
-      //     quadtree.render(canvas);
-      //   }
-      //   )
-      // }
-      //   removeLoop()
-      // for (const point of points) {
-      //   quadtree.insert(point);
-      // }
-      // Render the quadtree over time
-      // let lastFrameTime = Date.now();
-      // let timeSinceLastFrame = 1000 / fps;
-      // const renderLoop = () => {
-      //   const currentTime = Date.now();
-      //   const deltaTime = currentTime - lastFrameTime;
-      //   lastFrameTime = currentTime;
-      //   timeSinceLastFrame += deltaTime;
+      
 
-      //   if (timeSinceLastFrame >= 1000 / fps) {
-      //     timeSinceLastFrame = 0;
-      //     ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      //     quadtree.render(canvas);
-      //   }
-
-      //   // Call the render loop on the next frame
-      //   requestAnimationFrame(renderLoop);
-      // };
-
-      // requestAnimationFrame(renderLoop);
     }
   }, [canvasRef, width, height, maxDepth, maxPoints, points]);
 

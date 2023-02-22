@@ -81,7 +81,7 @@ export default class Quadtree {
     // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
     if (this.objects.getSize() < this.maxObjects || this.level >= this.maxDepth) {
       this.objects.addLast(object);
-      
+
       return true;
     }
 
@@ -117,27 +117,32 @@ export default class Quadtree {
     this.children.push(new Quadtree({ x: x + halfWidth, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxObjects, this.level + 1, this));
   }
 
-  // 
-  // private containsObject(bounds: { x: number, y: number, width: number, height: number }) {
-  //   return bounds.x + bounds.width > this.bounds.x && bounds.x < this.bounds.x + this.bounds.width &&
-  //          bounds.y + bounds.height > this.bounds.y && bounds.y < this.bounds.y + this.bounds.height;
-  // }
-
   /**
  * Checks if an object is contained within the boundaries of this quadtree node.
  * @param object The object to check.
  * @returns True if the object is contained within this node's boundaries, false otherwise.
  */
   public containsObject(object: Object): boolean {
-    return object.x + this.bounds.width > this.bounds.x && object.x < this.bounds.x + this.bounds.width &&
-      object.y + this.bounds.height > this.bounds.y && object.y < this.bounds.y + this.bounds.height;
+    return object.x > this.bounds.x && object.x + object.width < this.bounds.x + this.bounds.width &&
+      object.y > this.bounds.y && object.y + object.height < this.bounds.y + this.bounds.height;
   }
+
+  /**
+* Checks if an object intersects with the boundaries of this quadtree node.
+* @param object The object to check.
+* @returns True if the object intersects with this node's boundaries, false otherwise.
+*/
+  public intersectsObject(object: Object): boolean {
+    return object.x < this.bounds.x + this.bounds.width && object.x + object.width > this.bounds.x &&
+      object.y < this.bounds.y + this.bounds.height && object.y + object.height > this.bounds.y;
+  }
+
 
   public retrieveObjects(object: Object): Object[] {
     const objects: Object[] = [];
 
     // If the search area does not intersect with this Quadtree node, return an empty array
-    if (!this.intersectsObject(object)) {
+    if (!this.containsObject(object)) {
       return objects;
     }
 
@@ -157,7 +162,7 @@ export default class Quadtree {
 
     // If this is a leaf node, add objects that intersect with the search area
     for (const obj of this.objects) {
-      if (this.intersectsObject(obj.data) && this.containsObject(obj.data)) {
+      if (this.containsObject(obj.data)) {
         objects.push(obj.data);
       }
     }
@@ -174,16 +179,13 @@ export default class Quadtree {
       return null;
     }
     if (this.children.length === 0) {
-      console.log(this)
       return this;
     }
     const index = this.getIndex(object);
     if (index !== -1) {
-      console.log(this.children[index])
       return this.children[index];
-      
+
     } else {
-      console.log(this)
       return this;
     }
   }
@@ -194,9 +196,9 @@ export default class Quadtree {
  */
   public removeEmptyNode(node: Quadtree): void {
     // if the node has parent, remove it from the parent's children
-    if(node.parent){
+    if (node.parent) {
       const index = node.parent.children.indexOf(node);
-      if(index !== -1){
+      if (index !== -1) {
         node.parent.children.splice(index, 1);
       }
     }
@@ -225,16 +227,11 @@ export default class Quadtree {
     }
   }
 
-
-  /**
- * Checks if an object intersects with the boundaries of this quadtree node.
- * @param object The object to check.
- * @returns True if the object intersects with this node's boundaries, false otherwise.
- */
-  public intersectsObject(object: Object): boolean {
-    return object.x < this.bounds.x + this.bounds.width && object.x + object.width > this.bounds.x &&
-      object.y < this.bounds.y + this.bounds.height && object.y + object.height > this.bounds.y;
+  public checkCollision(obj1: Object, obj2: Object): boolean {
+    return obj1.x + obj1.width >= obj2.x && obj2.x + obj2.width >= obj1.x &&
+      obj1.y + obj1.height >= obj2.y && obj2.y + obj2.height >= obj1.y;
   }
+
 
   /**
  * Determines the index of the child Quadtree node in which an object belongs, based on the object's boundaries and the current node's bounds.
@@ -423,18 +420,19 @@ export default class Quadtree {
 // console.log(quadtree.objects.contains(obj1)); // should log false
 
 const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-const object1:Object = { x: 10, y: 10, width: 10, height: 10 };
-const object2:Object = { x: 60, y: 10, width: 10, height: 10 };
-const object3:Object = { x: 10, y: 60, width: 10, height: 10 };
-const object4:Object = { x: 60, y: 60, width: 10, height: 10 };
+const object1: Object = { x: 10, y: 10, width: 10, height: 10 };
+const object2: Object = { x: 60, y: 10, width: 10, height: 10 };
+const object3: Object = { x: 10, y: 60, width: 10, height: 10 };
+const object4: Object = { x: 100, y: 100, width: 10, height: 10 };
 for (const obj of [object1, object2, object3, object4]) {
   quadtree.insert(obj);
 }
-console.log(quadtree.getIndex(object1)); // should return 0
-console.log(quadtree.getIndex(object2)); // should return 1
-console.log(quadtree.getIndex(object3)); // should return 2
-console.log(quadtree.getIndex(object4)); // should return 3
-console.log(quadtree.objects); // should output 4 objects
-console.log(quadtree.containsObject(object1)); // should output true
-console.log(quadtree.removeObject(object1)); // should output true
-console.log(quadtree.objects); // should output 3 objects
+// console.log(quadtree.getIndex(object1)); // should return 0
+// console.log(quadtree.getIndex(object2)); // should return 1
+// console.log(quadtree.getIndex(object3)); // should return 2
+// console.log(quadtree.getIndex(object4)); // should return 3
+// console.log(quadtree.objects); // should output 4 objects
+// console.log(quadtree.containsObject(object1)); // should output true
+// console.log(quadtree.removeObject(object1)); // should output true
+// console.log(quadtree.objects); // should output 3 objects
+
