@@ -127,6 +127,8 @@ export default class DoublyLinkedList<T> {
         return tempNode;
     }
 
+
+    
     public swapNodes(index1: number, index2: number): boolean {
         if (index1 < 0 || index1 >= this.size || index2 < 0 || index2 >= this.size || index1 === index2) {
             return false;

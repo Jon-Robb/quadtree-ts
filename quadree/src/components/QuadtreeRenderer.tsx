@@ -25,25 +25,29 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       const insertloop = () => {
         if (i < points.length) {
           quadtree.insert(points[i]);
-          quadtree.render(ctx);
+          quadtree.render(ctx!);
           i++;
           setTimeout(insertloop, 100);
         }
       }
       insertloop();
 
+      // for (let i = 0; i < points.length; i++) {
+      //   quadtree.insert(points[i]);
+      // }
+      // quadtree.render(ctx!);
+      // console.log(quadtree.getTotalObjects());
       // let j = points.length - 1;
       // const removeloop = () => {
       //   if (j !== 0) {
       //     quadtree.removeObject(points[j]);
-      //     quadtree.render(canvas);
+      //     quadtree.render(ctx!);
       //     j--;
       //     setTimeout(removeloop, 100);
       //   }
       // }
       // removeloop();
 
-      
 
     }
   }, [canvasRef, width, height, maxDepth, maxPoints, points]);

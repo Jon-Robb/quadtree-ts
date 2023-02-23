@@ -16,6 +16,7 @@ export default class Quadtree {
   private _children: Quadtree[] = [];
   private _level: number;
   public parent: Quadtree | null
+  public count = 0 // for debugging
 
   constructor(bounds: { x: number, y: number, width: number, height: number }, maxDepth: number, maxObjects: number, level = 0, parent: Quadtree | null = null) {
     this._bounds = bounds;
@@ -73,31 +74,63 @@ export default class Quadtree {
  * @returns true if the object was successfully inserted, false otherwise.
  */
   insert(object: Object): boolean {
-    // Check if the object is contained within the current node
-    if (!this.containsObject(object)) {
-      return false;
-    }
 
-    // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
-    if (this.objects.getSize() < this.maxObjects || this.level >= this.maxDepth) {
-      this.objects.addLast(object);
+    // // Check if the object is contained within the current node
+    // if (!this.containsObject(object)) {
+    //   //console.log('object is not contained in node', this.bounds, object);
+    //   return false;
+    // }
 
-      return true;
-    }
+    // // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
+    // if (this.objects.getSize() < this.maxObjects && this.level <= this.maxDepth) {
+    //   this.objects.addLast(object);
+    //   //console.log('object added to node', this.bounds, object);
+    //   return true;
+    // }
+    // else {
+    //   // If the node is full and we haven't reached the maximum depth, subdivide the node and redistribute the objects
+    //   if (this.children.length === 0) {
+    //     this.subdivide();
+    //   }
+    //   // Recursively insert the object into the appropriate child node
+    //   for (const child of this.children) {
+    //     if (child.insert(object)) {
+    //       //console.log('object added to child node', child.bounds, object);
+    //       return true;
+    //     }
+    //   }
+    // }
 
-    // If the node is full and we haven't reached the maximum depth, subdivide the node and redistribute the objects
-    if (this.children.length === 0) {
-      this.subdivide();
-    }
+    // console.log('could not insert object', object);
+    // return false;
 
-    // Recursively insert the object into the appropriate child node
-    for (const child of this.children) {
-      if (child.insert(object)) {
+    let i = 0;
+    let index;
+    if (this.children[0]){
+      index = this.getIndex(object);
+      if (index !== -1) {
+        this.children[index].insert(object);
         return true;
       }
     }
-    return false;
+    this.objects.addLast(object);
+    if (this.objects.getSize() > this.maxObjects && this.level < this.maxDepth) {
+      if (this.children[0] === undefined) {
+        this.subdivide();
+      }
+      while (i < this.objects.getSize()) {
+        index = this.getIndex(this.objects.getNodeAt(i)?.data as Object);
+        if (index !== -1) {
+          this.children[index].insert(this.objects.getNodeAt(i)?.data as Object);
+          this.objects.remove(this.objects.getNodeAt(i)?.data as Object);
+        }
+        else {
+          i++;
+        }
+      }
+    }
   }
+
 
   /**
   * Subdivides the current node into four child nodes and redistributes
@@ -137,6 +170,14 @@ export default class Quadtree {
       object.y < this.bounds.y + this.bounds.height && object.y + object.height > this.bounds.y;
   }
 
+  public getTotalObjects(): number {
+    let count = 0;
+    for (const child of this.children) {
+      count += child.getTotalObjects();
+    }
+    this.objects.forEach(() => count++);
+    return count;
+  }
 
   public retrieveObjects(object: Object): Object[] {
     const objects: Object[] = [];
@@ -284,12 +325,12 @@ export default class Quadtree {
   public render(ctx: CanvasRenderingContext2D): void {
     // Define the colors for different levels
     const colors = ['rgba(255, 255, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)'];
-  
+
     const renderNode = (node: Quadtree) => {
       // Determine the color for this node based on its depth
       const depth = this.maxDepth - node.level;
       ctx.fillStyle = colors[depth % colors.length];
-  
+
       if (node.children.length === 0) {
         // Draw a rectangle for each object in this leaf node
         for (const object of node.objects) {
@@ -301,11 +342,11 @@ export default class Quadtree {
           renderNode(child);
         }
       }
-  
+
       // Draw a rectangle for this node
       ctx.strokeStyle = 'black';
       ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
-  
+
       // Draw a label for this node showing the number of objects it contains
       ctx.fillStyle = 'black';
       ctx.font = '12px Arial';
@@ -313,11 +354,11 @@ export default class Quadtree {
       ctx.textAlign = 'center';
       ctx.fillText(node.objects.getSize().toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
     }
-  
+
     // Render the root node and its children recursively
     renderNode(this);
   }
-  
+
 }
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
 // const object1 = { x: 10, y: 10, width: 10, height: 10 };
@@ -416,14 +457,14 @@ export default class Quadtree {
 // console.log(quadtree.containsObject(obj2)); // should log true
 // console.log(quadtree.objects.contains(obj1)); // should log false
 
-const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-const object1: Object = { x: 10, y: 10, width: 10, height: 10 };
-const object2: Object = { x: 60, y: 10, width: 10, height: 10 };
-const object3: Object = { x: 10, y: 60, width: 10, height: 10 };
-const object4: Object = { x: 100, y: 100, width: 10, height: 10 };
-for (const obj of [object1, object2, object3, object4]) {
-  quadtree.insert(obj);
-}
+// const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
+// const object1: Object = { x: 10, y: 10, width: 10, height: 10 };
+// const object2: Object = { x: 60, y: 10, width: 10, height: 10 };
+// const object3: Object = { x: 10, y: 60, width: 10, height: 10 };
+// const object4: Object = { x: 100, y: 100, width: 10, height: 10 };
+// for (const obj of [object1, object2, object3, object4]) {
+//   quadtree.insert(obj);
+// }
 // console.log(quadtree.getIndex(object1)); // should return 0
 // console.log(quadtree.getIndex(object2)); // should return 1
 // console.log(quadtree.getIndex(object3)); // should return 2
@@ -433,3 +474,15 @@ for (const obj of [object1, object2, object3, object4]) {
 // console.log(quadtree.removeObject(object1)); // should output true
 // console.log(quadtree.objects); // should output 3 objects
 
+const quadtree = new Quadtree({ x: 0, y: 0, width: 200, height: 200 }, 4, 10);
+// for (let i = 0; i < 100; i++) {
+//   quadtree.insert({ x: Math.random() * 100 + 10, y: Math.random() * 100 + 10, width: 10, height: 10 });
+// }
+
+// console.log(quadtree.getTotalObjects()); // should output 10
+
+// const list = new DoublyLinkedList();
+// for (let i = 0; i < 1000; i++) {
+//   list.addLast(i);
+// }
+// console.log(list.getSize()); // should output 1000
