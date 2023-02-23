@@ -35,6 +35,7 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
         quadtree.insert(points[i]);
       }
       console.log(quadtree.getTotalObjects());
+      console.log(quadtree.retrieveCollisions(points[0]));
 
       // quadtree.render(ctx!);
       // console.log(quadtree.getTotalObjects());

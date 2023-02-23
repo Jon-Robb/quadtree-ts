@@ -118,7 +118,7 @@ export default class Quadtree {
   // insert(object: Object): void {
   //   let i = 0;
   //   let index;
-    
+
   //   if (this.children[0]){
   //     index = this.getIndex(object);
   //     if (index !== -1) {
@@ -180,17 +180,40 @@ export default class Quadtree {
 * @param object The object to check.
 * @returns True if the object intersects with this node's boundaries, false otherwise.
 */
-  public intersectsObject(object: Object): boolean {
-    return object.x < this.bounds.x + this.bounds.width && object.x + object.width > this.bounds.x &&
-      object.y < this.bounds.y + this.bounds.height && object.y + object.height > this.bounds.y;
+  public intersectsObject(object: Object, obj2?: Object): boolean {
+    const bounds = obj2 ? obj2 : this.bounds;
+    return object.x < bounds.x + bounds.width && object.x + object.width > bounds.x &&
+      object.y < bounds.y + bounds.height && object.y + object.height > bounds.y;
+  }
+
+  // reccursively returns all colliding objects
+  public retrieveCollisions(object: Object): Object[] {
+    const objects: Object[] = [];
+    for (const obj of this.objects) {
+      if (object !== obj.data && this.intersectsObject(object, obj.data)) {
+        objects.push(obj.data);
+      }
+    }
+    if (this.children.length > 0) {
+      const index = this.getIndex(object);
+      if (index !== -1) {
+        const childObjects = this.children[index].retrieveCollisions(object);
+        objects.push(...childObjects);
+      } else {
+        for (const child of this.children) {
+          const childObjects = child.retrieveCollisions(object);
+          objects.push(...childObjects);
+        }
+      }
+    }
+    return objects;
   }
 
   public getTotalObjects(): number {
-    let count = 0;
+    let count = this.objects.getSize();
     for (const child of this.children) {
       count += child.getTotalObjects();
     }
-    this.objects.forEach(() => count++);
     return count;
   }
 
