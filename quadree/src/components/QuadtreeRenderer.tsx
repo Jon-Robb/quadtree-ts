@@ -30,11 +30,12 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
           setTimeout(insertloop, 100);
         }
       }
-      insertloop();
+      //insertloop();
+      for (let i = 0; i < points.length; i++) {
+        quadtree.insert(points[i]);
+      }
+      console.log(quadtree.getTotalObjects());
 
-      // for (let i = 0; i < points.length; i++) {
-      //   quadtree.insert(points[i]);
-      // }
       // quadtree.render(ctx!);
       // console.log(quadtree.getTotalObjects());
       // let j = points.length - 1;

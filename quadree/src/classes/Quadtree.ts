@@ -75,61 +75,76 @@ export default class Quadtree {
  */
   insert(object: Object): boolean {
 
-    // // Check if the object is contained within the current node
-    // if (!this.containsObject(object)) {
-    //   //console.log('object is not contained in node', this.bounds, object);
-    //   return false;
-    // }
-
-    // // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
-    // if (this.objects.getSize() < this.maxObjects && this.level <= this.maxDepth) {
-    //   this.objects.addLast(object);
-    //   //console.log('object added to node', this.bounds, object);
-    //   return true;
-    // }
-    // else {
-    //   // If the node is full and we haven't reached the maximum depth, subdivide the node and redistribute the objects
-    //   if (this.children.length === 0) {
-    //     this.subdivide();
-    //   }
-    //   // Recursively insert the object into the appropriate child node
-    //   for (const child of this.children) {
-    //     if (child.insert(object)) {
-    //       //console.log('object added to child node', child.bounds, object);
-    //       return true;
-    //     }
-    //   }
-    // }
-
-    // console.log('could not insert object', object);
-    // return false;
-
-    let i = 0;
-    let index;
-    if (this.children[0]){
-      index = this.getIndex(object);
-      if (index !== -1) {
-        this.children[index].insert(object);
-        return true;
-      }
+    // Check if the object is contained within the current node
+    if (!this.containsObject(object) && !this.intersectsObject(object)) {
+      console.log('object is not contained in node', this.bounds, object);
+      return false;
     }
-    this.objects.addLast(object);
-    if (this.objects.getSize() > this.maxObjects && this.level < this.maxDepth) {
-      if (this.children[0] === undefined) {
+
+    // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
+    if (this.objects.getSize() < this.maxObjects && this.level <= this.maxDepth) {
+      this.objects.addLast(object);
+      //console.log('object added to node', this.bounds, object);
+      return true;
+    }
+    else {
+      // If the node is full and we haven't reached the maximum depth, subdivide the node and redistribute the objects
+      if (this.children.length === 0) {
         this.subdivide();
       }
-      while (i < this.objects.getSize()) {
-        index = this.getIndex(this.objects.getNodeAt(i)?.data as Object);
-        if (index !== -1) {
-          this.children[index].insert(this.objects.getNodeAt(i)?.data as Object);
-          this.objects.remove(this.objects.getNodeAt(i)?.data as Object);
-        }
-        else {
-          i++;
+      //Recursively insert the object into the appropriate child node
+      for (const child of this.children) {
+        if (child.insert(object)) {
+          //console.log('object added to child node', child.bounds, object);
+          return true;
         }
       }
+      // if (this.children[0].insert(object)) {
+      //   return true;
+      // }else if (this.children[1].insert(object)) {
+      //   return true;
+      // }else if (this.children[2].insert(object)) {
+      //   return true;
+      // }else if (this.children[3].insert(object)) {
+      //   return true;
+      // }
     }
+
+    console.log('could not insert object', object);
+    return false;
+
   }
+
+  // insert(object: Object): void {
+  //   let i = 0;
+  //   let index;
+    
+  //   if (this.children[0]){
+  //     index = this.getIndex(object);
+  //     if (index !== -1) {
+  //       this.children[index].insert(object);
+  //     }
+  //   }
+  //   this.objects.addLast(object);
+
+  //   if (this.objects.getSize() > this.maxObjects && this.level < this.maxDepth) {
+  //     if (this.children[0] === undefined) {
+  //       this.subdivide();
+  //     }
+
+  //     while (i < this.objects.getSize()) {
+  //       let node = this.objects.getNodeAt(i)?.data as Object;
+  //       index = this.getIndex(node);
+  //       if (index !== -1) {
+  //         this.children[index].insert(node);
+  //         this.objects.remove(node);
+  //       }
+  //       else {
+  //         i++;
+  //       }
+  //     }
+  //   }
+  // }
 
 
   /**
@@ -475,11 +490,11 @@ export default class Quadtree {
 // console.log(quadtree.objects); // should output 3 objects
 
 const quadtree = new Quadtree({ x: 0, y: 0, width: 200, height: 200 }, 4, 10);
-// for (let i = 0; i < 100; i++) {
-//   quadtree.insert({ x: Math.random() * 100 + 10, y: Math.random() * 100 + 10, width: 10, height: 10 });
-// }
+for (let i = 0; i < 100; i++) {
+  quadtree.insert({ x: Math.random() * 100 + 10, y: Math.random() * 100 + 10, width: 10, height: 10 });
+}
 
-// console.log(quadtree.getTotalObjects()); // should output 10
+console.log(quadtree.getTotalObjects()); // should output 10
 
 // const list = new DoublyLinkedList();
 // for (let i = 0; i < 1000; i++) {
