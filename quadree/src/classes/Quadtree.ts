@@ -281,46 +281,43 @@ export default class Quadtree {
   }
 
 
-  render(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext('2d');
-    ctx!.clearRect(0, 0, canvas.width, canvas.height);
-    this.renderNode(this, ctx!);
-  }
-
-  private renderNode(node: Quadtree, ctx: CanvasRenderingContext2D) {
+  public render(ctx: CanvasRenderingContext2D): void {
     // Define the colors for different levels
     const colors = ['rgba(255, 255, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)'];
-
-    // Determine the color for this node based on its depth
-    const depth = this._maxDepth - node.level;
-    ctx.fillStyle = colors[depth % colors.length];
-
-    if (node.children.length === 0) {
-      // Draw a rectangle for each object in this leaf node
-      for (const object of node.objects) {
-        //ctx.fillStyle = 'red';
-        ctx.fillRect(object.data.x, object.data.y, object.data.width, object.data.height);
+  
+    const renderNode = (node: Quadtree) => {
+      // Determine the color for this node based on its depth
+      const depth = this.maxDepth - node.level;
+      ctx.fillStyle = colors[depth % colors.length];
+  
+      if (node.children.length === 0) {
+        // Draw a rectangle for each object in this leaf node
+        for (const object of node.objects) {
+          ctx.fillRect(object.data.x, object.data.y, object.data.width, object.data.height);
+        }
+      } else {
+        // Render the child nodes recursively
+        for (const child of node.children) {
+          renderNode(child);
+        }
       }
-    } else {
-      // Render the child nodes recursively
-      for (const child of node.children) {
-        this.renderNode(child, ctx);
-      }
+  
+      // Draw a rectangle for this node
+      ctx.strokeStyle = 'black';
+      ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
+  
+      // Draw a label for this node showing the number of objects it contains
+      ctx.fillStyle = 'black';
+      ctx.font = '12px Arial';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillText(node.objects.getSize().toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
     }
-
-    // Draw a rectangle for this node
-    ctx.strokeStyle = 'black';
-    ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
-
-    // Draw a label for this node showing the number of objects it containsObject
-    ctx.fillStyle = 'black';
-    ctx.font = '12px Arial';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillText(node.objects.getSize().toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
+  
+    // Render the root node and its children recursively
+    renderNode(this);
   }
-
-
+  
 }
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
 // const object1 = { x: 10, y: 10, width: 10, height: 10 };
