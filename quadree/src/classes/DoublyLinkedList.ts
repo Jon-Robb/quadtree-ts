@@ -1,3 +1,4 @@
+import { BoudingBox } from './Quadtree';
 class DoublyLinkedListNode<T> {
     y(x: (x: any, y: any, arg2: number, arg3: number) => void, y: any, arg2: number, arg3: number) {
         throw new Error("Method not implemented.");
@@ -395,6 +396,16 @@ export default class DoublyLinkedList<T> {
             }
         }
         return current;
+    }
+
+    public reduce<U>(callback: (accumulator: U, value: T, index: number, list: DoublyLinkedList<T>) => U, initialValue: U): U {
+        let accumulator = initialValue;
+        let index = 0;
+        for (const node of this) {
+            accumulator = callback(accumulator, node.data, index, this);
+            ++index;
+        }
+        return accumulator;
     }
 
     public reverse(): void {

@@ -10,7 +10,7 @@ export interface BoudingBox {
 export default class Quadtree {
   // private _objects: { object: BoudingBox, bounds: { x: number, y: number, width: number, height: number } }[] = [];
   private _objects: DoublyLinkedList<BoudingBox> = new DoublyLinkedList();
-  private _maxDepth: number;
+  // private _maxDepth: number;
   private _maxObjects: number;
   private _bounds: { x: number, y: number, width: number, height: number };
   private _children: Quadtree[] = [];
@@ -18,9 +18,11 @@ export default class Quadtree {
   public parent: Quadtree | null
   public count = 0 // for debugging
 
-  constructor(bounds: { x: number, y: number, width: number, height: number }, maxDepth: number, maxObjects: number, level = 0, parent: Quadtree | null = null) {
+  constructor(bounds: { x: number, y: number, width: number, height: number },
+    //  maxDepth: number, 
+    maxObjects: number, level = 0, parent: Quadtree | null = null) {
     this._bounds = bounds;
-    this._maxDepth = maxDepth;
+    // this._maxDepth = maxDepth;
     this._maxObjects = maxObjects;
     this._level = level;
     this.parent = parent;
@@ -32,9 +34,9 @@ export default class Quadtree {
       ;
   }
 
-  get maxDepth() {
-    return this._maxDepth;
-  }
+  // get maxDepth() {
+  //   return this._maxDepth;
+  // }
 
   get maxObjects() {
     return this._maxObjects;
@@ -110,8 +112,7 @@ export default class Quadtree {
   @param object - The bounding box object to be inserted into the quadtree.
   */
   insert(object: BoudingBox): void {
-    let index;
-
+    let index: number;
     if (this.children[0]) {
       index = this.getIndex(object);
       if (index !== -1) {
@@ -120,19 +121,43 @@ export default class Quadtree {
       }
     }
     this.objects.addLast(object);
-    if (this.objects.getSize() > this.maxObjects && this.level < this.maxDepth) {
-      if (this.children[0] === undefined) {
-        this.subdivide();
-      }
-      this.objects.forEach((node) => {
-        index = this.getIndex(node);
-        if (index !== -1) {
-          this.children[index].insert(node);
-          this.objects.remove(node);
-        }
-      });
+    this.count++; //for debugging
+
+    const nodeSize = this.bounds.width * this.bounds.height;
+    const objectSize = object.width * object.height;
+    let averageSize = objectSize;
+    this.objects.forEach((obj) => {
+      averageSize += obj.width * obj.height;
+    });
+    averageSize /= this.objects.getSize();
+    if (this.children[0] || (averageSize >= nodeSize / 4 && this.objects.getSize() < this.maxObjects)) {
+      return;
     }
+    this.subdivide();
+    this.objects.forEach((obj) => {
+      index = this.getIndex(obj);
+      if (index !== -1) {
+        this.children[index].insert(obj);
+        this.objects.remove(obj);
+      }
+    });
+
+    // Check if the node shoukd be subdivided based  on object size and max object per node
+    // if (this.objects.getSize() >= this.maxObjects) {
+    //   if (!this.children[0]) {
+    //     this.subdivide();
+    //   }
+    //   this.objects.forEach((node) => {
+    //     index = this.getIndex(node);
+    //     if (index !== -1) {
+    //       this.children[index].insert(node);
+    //       this.objects.remove(node);
+    //     }
+    //   });
+    // }
   }
+
+
 
 
   /**
@@ -147,10 +172,10 @@ export default class Quadtree {
     const halfHeight = height / 2;
 
     // Create four child nodes, each with the same maximum depth and maximum number of objects as the current node
-    this.children.push(new Quadtree({ x: x, y: y, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxObjects, this.level + 1, this));
-    this.children.push(new Quadtree({ x: x + halfWidth, y: y, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxObjects, this.level + 1, this));
-    this.children.push(new Quadtree({ x: x, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxObjects, this.level + 1, this));
-    this.children.push(new Quadtree({ x: x + halfWidth, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxDepth, this.maxObjects, this.level + 1, this));
+    this.children.push(new Quadtree({ x: x, y: y, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
+    this.children.push(new Quadtree({ x: x + halfWidth, y: y, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
+    this.children.push(new Quadtree({ x: x, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
+    this.children.push(new Quadtree({ x: x + halfWidth, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
   }
 
   /**
@@ -350,6 +375,16 @@ export default class Quadtree {
         return 3;
       }
     }
+
+    const objectCenterX = x + width / 2;
+    const objectCenterY = y + height / 2;
+    if (objectCenterX >= this.bounds.x && objectCenterX <= this.bounds.x + this.bounds.width &&
+      objectCenterY >= this.bounds.y && objectCenterY <= this.bounds.y + this.bounds.height){
+      return -1;
+      }
+    // if (!this.containsObject(object)) {
+    //   return -1;
+    // }
     return -1;
   }
 
@@ -366,8 +401,8 @@ export default class Quadtree {
 
     const renderNode = (node: Quadtree) => {
       // Determine the color for this node based on its depth
-      const depth = this.maxDepth - node.level;
-      ctx.fillStyle = colors[depth % colors.length];
+      // const depth = this.maxDepth - node.level;
+      ctx.fillStyle = "red";
 
       if (node.children.length === 0) {
         // Draw a rectangle for each object in this leaf node
