@@ -16,6 +16,7 @@ export default class Quadtree {
   private _children: Quadtree[] = [];
   private _level: number;
   public parent: Quadtree | null
+  private _collisionTreshold = 128;
   public count = 0 // for debugging
 
   constructor(bounds: { x: number, y: number, width: number, height: number },
@@ -27,6 +28,10 @@ export default class Quadtree {
     this._level = level;
     this.parent = parent;
 
+  }
+
+  get collisionTreshold() {
+    return this._collisionTreshold;
   }
 
   get level() {
@@ -237,6 +242,8 @@ export default class Quadtree {
     return Array.from(objects.keys());
   }
 
+
+
   public getTotalObjects(): number {
     let count = this.objects.getSize();
     for (const child of this.children) {
@@ -244,6 +251,38 @@ export default class Quadtree {
     }
     return count;
   }
+
+  public getDistance(object: BoudingBox, node:Quadtree): number {
+    const {x, y, width, height} = node.bounds;
+    const dx = Math.max(Math.abs(object.x - (x + width / 2)) - (width / 2 + object.width / 2), 0);
+    const dy = Math.max(Math.abs(object.y - (y + height / 2)) - (height / 2 + object.height / 2), 0);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  private shouldTestCollision(node : Quadtree, boundingBox : BoudingBox) {
+    return this.getDistance(boundingBox, node) < this.collisionTreshold;
+  }
+
+  public queryRange(range: BoudingBox): BoudingBox[] {
+    const objectsFound: BoudingBox[] = [];
+    if (!this.intersectsObject(range)) {
+      return objectsFound;
+    }
+    this.objects.forEach((obj) => {
+      if (this.intersectsObject(obj, range)) {
+        objectsFound.push(obj);
+      }
+    });
+    if (this.children[0]){
+      for (const child of this.children) {
+        if (this.shouldTestCollision(child, range)) {
+          objectsFound.push(...child.queryRange(range));
+        }
+      }
+    }
+    return objectsFound;
+  }
+
 
   public retrieveObjects(object: BoudingBox): BoudingBox[] {
     const objects: BoudingBox[] = [];
@@ -282,7 +321,7 @@ export default class Quadtree {
  * @returns The Quadtree node that contains the object, or null if the object is not contained in the Quadtree.
  */
   public findNode(object: BoudingBox): Quadtree | null {
-    if (!this.containsObject(object)) {
+    if (!this.intersectsObject(object)) {
       return null;
     }
     if (this.children.length === 0) {
@@ -296,6 +335,19 @@ export default class Quadtree {
       return this;
     }
   }
+
+  public updateObject(object: BoudingBox): void {
+    const node = this.findNode(object);
+    if (!node) {
+      return;
+    }
+    if (node.objects.remove(object)) {
+      const newNode = this.findNode(object);
+      newNode?.insert(object);
+    }
+  }
+
+
 
   /**
  * Removes an empty node from the Quadtree and recursively removes empty parent nodes.
@@ -333,6 +385,11 @@ export default class Quadtree {
       }
     }
   }
+
+  // public updateObject(object: BoudingBox): void {
+  //   // Traverse the Quadtree to find the node containing the object to update
+  //   const node = this.findNode(object);
+
 
 
 
@@ -559,3 +616,23 @@ export default class Quadtree {
 //   list.addLast(i);
 // }
 // console.log(list.getSize()); // should output 1000
+
+// create a quadtree and insert some objects
+const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 10);
+const objects = [
+  { x: 10, y: 10, width: 10, height: 10 },
+  { x: 30, y: 30, width: 10, height: 10 },
+  { x: 50, y: 50, width: 10, height: 10 },
+  { x: 70, y: 70, width: 10, height: 10 },
+  { x: 90, y: 90, width: 10, height: 10 },
+];
+for (const obj of objects) {
+  quadtree.insert(obj);
+}
+// query for objects within a range
+// const objectsInRange = quadtree.retrieveCollisions({ x: 0, y: 0, width: 100, height: 100 });
+// print the results
+// console.log(objectsInRange);
+console.log(quadtree)
+// objects.forEach((obj) => {obj.x += 50, obj.y += 50; quadtree.updateObject(obj);});
+// console.log(quadtree)
