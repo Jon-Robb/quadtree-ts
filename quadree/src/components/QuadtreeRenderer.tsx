@@ -34,6 +34,13 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       for (let i = 0; i < points.length; i++) {
         quadtree.insert(points[i]);
       }
+      // console.log(quadtree.retrieveCollisionsWithBB(points[0]));
+      // console.log(points[0]);
+      if (quadtree.queryRange(points[0]).size > 1) {
+        console.log(quadtree.queryRange(points[0]))
+        console.log(points[0]);
+      }
+      console.log(quadtree.retrieveAllCollisions());
       // console.log(quadtree.getTotalObjects());
       // // console.log(quadtree.retrieveCollisions(points[0]));
       // points.forEach(point => {
@@ -55,6 +62,7 @@ const QuadtreeRenderer: React.FC<Props> = ({ width, height, maxDepth, maxPoints,
       // }
       // removeloop();
       quadtree.render(ctx!);
+      console.log(quadtree.getTotalObjects());
 
     }
   }, [canvasRef, width, height, maxDepth, maxPoints, points]);

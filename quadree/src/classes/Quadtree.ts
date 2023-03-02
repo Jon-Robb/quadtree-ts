@@ -1,6 +1,6 @@
 import DoublyLinkedList from "./DoublyLinkedList";
 
-export interface BoudingBox {
+export interface BoundingBoxInterface {
   x: number;
   y: number;
   width: number;
@@ -8,15 +8,14 @@ export interface BoudingBox {
 }
 
 export default class Quadtree {
-  // private _objects: { object: BoudingBox, bounds: { x: number, y: number, width: number, height: number } }[] = [];
-  private _objects: DoublyLinkedList<BoudingBox> = new DoublyLinkedList();
+  private _boundingBoxes: DoublyLinkedList<BoundingBoxInterface> = new DoublyLinkedList();
   // private _maxDepth: number;
   private _maxObjects: number;
   private _bounds: { x: number, y: number, width: number, height: number };
   private _children: Quadtree[] = [];
   private _level: number;
-  public parent: Quadtree | null
-  private _collisionTreshold = 128;
+  private _parent: Quadtree | null
+  private _collisionTreshold : number = 128;
   public count = 0 // for debugging
 
   constructor(bounds: { x: number, y: number, width: number, height: number },
@@ -26,8 +25,12 @@ export default class Quadtree {
     // this._maxDepth = maxDepth;
     this._maxObjects = maxObjects;
     this._level = level;
-    this.parent = parent;
+    this._parent = parent;
 
+  }
+
+  get parent() {
+    return this._parent;
   }
 
   get collisionTreshold() {
@@ -36,7 +39,7 @@ export default class Quadtree {
 
   get level() {
     return this._level
-      ;
+  
   }
 
   // get maxDepth() {
@@ -51,8 +54,8 @@ export default class Quadtree {
     return this._bounds;
   }
 
-  get objects() {
-    return this._objects;
+  get boundingBoxes() {
+    return this._boundingBoxes;
   }
 
   get children() {
@@ -67,116 +70,57 @@ export default class Quadtree {
     this._children = children;
   }
 
-  set objects(objects: DoublyLinkedList<BoudingBox>) {
-    this._objects = objects;
+  set boundingBoxes(boundingBoxes: DoublyLinkedList<BoundingBoxInterface>) {
+    this._boundingBoxes = boundingBoxes;
   }
 
-  /**
- * Inserts an object into the Quadtree. If the object is not contained
- * within the current node, the insertion is aborted. If the current
- * node is at its maximum capacity, it is subdivided into four child
- * nodes and the objects are redistributed among the child nodes.
- * @param object - The object to insert.
- * @param depth - The depth of the current node in the tree.
- * @returns true if the object was successfully inserted, false otherwise.
- */
-  // insert(object: BoudingBox): boolean {
-
-  //   // Check if the object is contained within the current node
-  //   if (!this.containsObject(object) && !this.intersectsObject(object)) {
-  //     return false;
-  //   }
-
-  //   // If the node is not full and we haven't reached the maximum depth, just add the object to the current node
-  //   if (this.objects.getSize() < this.maxObjects && this.level <= this.maxDepth) {
-  //     this.objects.addLast(object);
-  //     return true;
-  //   }
-  //   else {
-  //     // If the node is full and we haven't reached the maximum depth, subdivide the node and redistribute the objects
-  //     if (this.children.length === 0) {
-  //       this.subdivide();
-  //     }
-  //     //Recursively insert the object into the appropriate child node
-  //     for (const child of this.children) {
-  //       if (child.insert(object)) {
-  //         return true;
-  //       }
-  //     }
-
-  //   }
-  //   return false;
-  // }
 
   /**
-
-  Inserts a bounding box object into the quadtree. If the node already has children, it tries to insert the object into one of them
-  based on the object's location relative to the node's bounds. If the object doesn't fit into any child node, it is added to the node's
-  object list. If the node exceeds the maximum number of objects it can hold and the maximum depth hasn't been reached, it subdivides and
-  redistributes the objects to its children.
-  @param object - The bounding box object to be inserted into the quadtree.
+  Inserts a bounding box boundingBox into the quadtree. If the node already has children, it tries to insert the boundingBox into one of them
+  based on the boundingBox's location relative to the node's bounds. If the boundingBox doesn't fit into any child node, it is added to the node's
+  boundingBox list. If the node exceeds the maximum number of boundingBoxes it can hold and the maximum depth hasn't been reached, it subdivides and
+  redistributes the boundingBoxes to its children.
+  @param boundingBox - The bounding box boundingBox to be inserted into the quadtree.
   */
-  insert(object: BoudingBox): void {
+  insert(boundingBox: BoundingBoxInterface): void {
     let index: number;
     if (this.children[0]) {
-      index = this.getIndex(object);
+      index = this.getIndex(boundingBox);
       if (index !== -1) {
-        this.children[index].insert(object);
+        this.children[index].insert(boundingBox);
         return;
       }
     }
-    this.objects.addLast(object);
+    this.boundingBoxes.addLast(boundingBox);
     this.count++; //for debugging
 
-    const nodeSize = this.bounds.width * this.bounds.height;
-    const objectSize = object.width * object.height;
-    let averageSize = objectSize;
-    this.objects.forEach((obj) => {
-      averageSize += obj.width * obj.height;
-    });
-    averageSize /= this.objects.getSize();
-    if (this.children[0] || (averageSize >= nodeSize / 4 && this.objects.getSize() < this.maxObjects)) {
-      return;
-    }
-    this.subdivide();
-    this.objects.forEach((obj) => {
-      index = this.getIndex(obj);
-      if (index !== -1) {
-        this.children[index].insert(obj);
-        this.objects.remove(obj);
+    // Check if the node shoukd be subdivided based  on boundingBox size and max boundingBox per node
+    if (this.boundingBoxes.size >= this.maxObjects) {
+      if (!this.children[0]) {
+        this.subdivide();
       }
-    });
-
-    // Check if the node shoukd be subdivided based  on object size and max object per node
-    // if (this.objects.getSize() >= this.maxObjects) {
-    //   if (!this.children[0]) {
-    //     this.subdivide();
-    //   }
-    //   this.objects.forEach((node) => {
-    //     index = this.getIndex(node);
-    //     if (index !== -1) {
-    //       this.children[index].insert(node);
-    //       this.objects.remove(node);
-    //     }
-    //   });
-    // }
+      this.boundingBoxes.forEach((node) => {
+        index = this.getIndex(node);
+        if (index !== -1) {
+          this.children[index].insert(node);
+          this.boundingBoxes.remove(node);
+        }
+      });
+    }
   }
-
-
-
 
   /**
   * Subdivides the current node into four child nodes and redistributes
-  * the objects that were previously stored in the current node among
+  * the boundingBoxes that were previously stored in the current node among
   * the child nodes. The child nodes are created with the same maximum
-  * depth and maximum number of objects as the current node.
+  * depth and maximum number of boundingBoxes as the current node.
   */
   private subdivide(): void {
     const { x, y, width, height } = this.bounds;
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
-    // Create four child nodes, each with the same maximum depth and maximum number of objects as the current node
+    // Create four child nodes, each with the same maximum depth and maximum number of boundingBoxes as the current node
     this.children.push(new Quadtree({ x: x, y: y, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
     this.children.push(new Quadtree({ x: x + halfWidth, y: y, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
     this.children.push(new Quadtree({ x: x, y: y + halfHeight, width: halfWidth, height: halfHeight }, this.maxObjects, this.level + 1, this));
@@ -184,150 +128,134 @@ export default class Quadtree {
   }
 
   /**
- * Checks if an object is contained within the boundaries of this quadtree node.
- * @param object The object to check.
- * @returns True if the object is contained within this node's boundaries, false otherwise.
+ * Checks if an boundingBox is contained within the boundaries of this quadtree node.
+ * @param boundingBox The boundingBox to check.
+ * @returns True if the boundingBox is contained within this node's boundaries, false otherwise.
  */
-  public containsObject(object: BoudingBox): boolean {
-    return object.x > this.bounds.x && object.x + object.width < this.bounds.x + this.bounds.width &&
-      object.y > this.bounds.y && object.y + object.height < this.bounds.y + this.bounds.height;
+  public containsObject(boundingBox: BoundingBoxInterface): boolean {
+    return boundingBox.x > this.bounds.x && boundingBox.x + boundingBox.width < this.bounds.x + this.bounds.width &&
+      boundingBox.y > this.bounds.y && boundingBox.y + boundingBox.height < this.bounds.y + this.bounds.height;
+  }
+
+    /**
+  * Checks if an boundingBox intersects with the boundaries of this quadtree node.
+  * @param boundingBox The boundingBox to check.
+  * @param obj2 The boundingBox to check against. Optional, if not provided, the node's own bounds are used.
+  * @returns True if the boundingBox intersects with this node's boundaries, false otherwise.
+  */
+  public intersects(boundingBox: BoundingBoxInterface, obj2?: BoundingBoxInterface): boolean {
+    const bounds = obj2 ? obj2 : this.bounds;
+    return boundingBox.x < bounds.x + bounds.width && boundingBox.x + boundingBox.width > bounds.x &&
+      boundingBox.y < bounds.y + bounds.height && boundingBox.y + boundingBox.height > bounds.y;
   }
 
   /**
-* Checks if an object intersects with the boundaries of this quadtree node.
-* @param object The object to check.
-* @returns True if the object intersects with this node's boundaries, false otherwise.
-*/
-  public intersectsObject(object: BoudingBox, obj2?: BoudingBox): boolean {
-    const bounds = obj2 ? obj2 : this.bounds;
-    return object.x < bounds.x + bounds.width && object.x + object.width > bounds.x &&
-      object.y < bounds.y + bounds.height && object.y + object.height > bounds.y;
-  }
-
-  // public checkCollision(obj1: BoudingBox, obj2: BoudingBox): boolean {
-  //   return obj1.x + obj1.width >= obj2.x && obj2.x + obj2.width >= obj1.x &&
-  //     obj1.y + obj1.height >= obj2.y && obj2.y + obj2.height >= obj1.y;
-  // }
-
-  // reccursively returns all colliding objects
-  public retrieveCollisions(object: BoudingBox): BoudingBox[] {
-    const objects: Map<BoudingBox, boolean> = new Map();
-    this.objects.forEach((obj) => {
-      if (object !== obj && this.intersectsObject(object, obj)) {
-        objects.set(obj, true);
+   * Returns an array of boundingBoxes that are colliding with the given boundingBox.
+   * @param boundingBox The boundingBox to check.
+    */
+  public retrieveIntersectingBoundingBoxes(boundingBox: BoundingBoxInterface): BoundingBoxInterface[] {
+    const boundingBoxes: Set<BoundingBoxInterface> = new Set();
+    this.boundingBoxes.forEach((obj) => {
+      if (boundingBox !== obj && this.intersects(boundingBox, obj)) {
+        boundingBoxes.add(obj);
       }
     });
-
-    // for (const obj of this.objects) {
-    //   if (object !== obj.data && this.intersectsObject(object, obj.data)) {
-    //     objects.push(obj.data);
-    //   }
-    // }
-    if (this.children.length > 0) {
-      const index = this.getIndex(object);
+    if (this.children[0]) {
+      const index = this.getIndex(boundingBox);
       if (index !== -1) {
-        const childObjects = this.children[index].retrieveCollisions(object);
+        const childObjects = this.children[index].retrieveIntersectingBoundingBoxes(boundingBox);
         for (const childObject of childObjects) {
-          objects.set(childObject, true);
+          boundingBoxes.add(childObject);
         }
       } else {
         for (const child of this.children) {
-          const childObjects = child.retrieveCollisions(object);
+          const childObjects = child.retrieveIntersectingBoundingBoxes(boundingBox);
           for (const childObject of childObjects) {
-            objects.set(childObject, true);
+            boundingBoxes.add(childObject);
           }
         }
       }
     }
-    return Array.from(objects.keys());
+    return Array.from(boundingBoxes.keys());
   }
 
-
-
-  public getTotalObjects(): number {
-    let count = this.objects.getSize();
-    for (const child of this.children) {
-      count += child.getTotalObjects();
+  public retrieveAllCollisions(): Set<BoundingBoxInterface> {
+    const collisions: Set<BoundingBoxInterface> = new Set();
+    this.boundingBoxes.forEach((boundingBox) => {
+      const collidingBoundingBoxes = this.retrieveIntersectingBoundingBoxes(boundingBox);
+      for (const collidingBoundingBox of collidingBoundingBoxes) {
+        collisions.add(collidingBoundingBox);
+      }
+    });
+    if (this.children[0]) {
+      for (const child of this.children) {
+        const childCollisions = child.retrieveAllCollisions();
+        for (const childCollision of childCollisions) {
+          collisions.add(childCollision);
+        }
+      }
     }
-    return count;
+    return collisions;
   }
 
-  public getDistance(object: BoudingBox, node:Quadtree): number {
-    const {x, y, width, height} = node.bounds;
-    const dx = Math.max(Math.abs(object.x - (x + width / 2)) - (width / 2 + object.width / 2), 0);
-    const dy = Math.max(Math.abs(object.y - (y + height / 2)) - (height / 2 + object.height / 2), 0);
+
+ 
+
+  public getDistance(boundingBox: BoundingBoxInterface, node: Quadtree): number {
+    const { x, y, width, height } = node.bounds;
+    const dx = Math.max(Math.abs(boundingBox.x - (x + width / 2)) - (width / 2 + boundingBox.width / 2), 0);
+    const dy = Math.max(Math.abs(boundingBox.y - (y + height / 2)) - (height / 2 + boundingBox.height / 2), 0);
     return Math.sqrt(dx * dx + dy * dy);
   }
-  
-  private shouldTestCollision(node : Quadtree, boundingBox : BoudingBox) {
+
+  private shouldTestCollision(node: Quadtree, boundingBox: BoundingBoxInterface) {
     return this.getDistance(boundingBox, node) < this.collisionTreshold;
   }
 
-  public queryRange(range: BoudingBox): BoudingBox[] {
-    const objectsFound: BoudingBox[] = [];
-    if (!this.intersectsObject(range)) {
+  public queryRange(range: BoundingBoxInterface): Set<BoundingBoxInterface> {
+    const objectsFound: Set<BoundingBoxInterface> = new Set();
+    if (!this.intersects(range)) {
       return objectsFound;
     }
-    this.objects.forEach((obj) => {
-      if (this.intersectsObject(obj, range)) {
-        objectsFound.push(obj);
+    this.boundingBoxes.forEach((obj) => {
+      if (this.intersects(obj, range)) {
+        objectsFound.add(obj);
       }
     });
-    if (this.children[0]){
+    if (this.children[0]) {
       for (const child of this.children) {
         if (this.shouldTestCollision(child, range)) {
-          objectsFound.push(...child.queryRange(range));
+          const childObjects = child.queryRange(range);
+          for (const childObject of childObjects) {
+            objectsFound.add(childObject);
+          }
         }
       }
     }
     return objectsFound;
   }
 
-
-  public retrieveObjects(object: BoudingBox): BoudingBox[] {
-    const objects: BoudingBox[] = [];
-
-    // If the search area does not intersect with this Quadtree node, return an empty array
-    if (!this.containsObject(object)) {
-      return objects;
+  public getTotalObjects(): number {
+    let count = this.boundingBoxes.size;
+    for (const child of this.children) {
+      count += child.getTotalObjects();
     }
-
-    // If this is not a leaf node, recursively retrieve objects from the relevant child nodes
-    if (this.children.length > 0) {
-      const index = this.getIndex(object);
-      if (index !== -1) {
-        const childObjects = this.children[index].retrieveObjects(object);
-        objects.push(...childObjects);
-      } else {
-        for (const child of this.children) {
-          const childObjects = child.retrieveObjects(object);
-          objects.push(...childObjects);
-        }
-      }
-    }
-    // If this is a leaf node, add objects that intersect with the search area
-    this.objects.forEach((obj) => {
-      if (this.containsObject(obj)) {
-        objects.push(obj);
-      }
-    });
-
-    return objects;
+    return count;
   }
 
   /**
- * Finds the Quadtree node that contains the specified object.
- * @param object - The object to find.
- * @returns The Quadtree node that contains the object, or null if the object is not contained in the Quadtree.
+ * Finds the Quadtree node that contains the specified boundingBox.
+ * @param boundingBox - The boundingBox to find.
+ * @returns The Quadtree node that contains the boundingBox, or null if the boundingBox is not contained in the Quadtree.
  */
-  public findNode(object: BoudingBox): Quadtree | null {
-    if (!this.intersectsObject(object)) {
+  public findNode(boundingBox: BoundingBoxInterface): Quadtree | null {
+    if (!this.intersects(boundingBox)) {
       return null;
     }
     if (this.children.length === 0) {
       return this;
     }
-    const index = this.getIndex(object);
+    const index = this.getIndex(boundingBox);
     if (index !== -1) {
       return this.children[index];
 
@@ -336,14 +264,14 @@ export default class Quadtree {
     }
   }
 
-  public updateObject(object: BoudingBox): void {
-    const node = this.findNode(object);
+  public updateObject(boundingBox: BoundingBoxInterface): void {
+    const node = this.findNode(boundingBox);
     if (!node) {
       return;
     }
-    if (node.objects.remove(object)) {
-      const newNode = this.findNode(object);
-      newNode?.insert(object);
+    if (node.boundingBoxes.remove(boundingBox)) {
+      const newNode = this.findNode(boundingBox);
+      newNode?.insert(boundingBox);
     }
   }
 
@@ -362,59 +290,51 @@ export default class Quadtree {
       }
     }
     //recursively remove empty parent nodes
-    if (node.parent?.objects.getSize() === 0 && node.parent?.children.length === 0) {
+    if (node.parent?.boundingBoxes.size === 0 && node.parent?.children.length === 0) {
       this.removeEmptyNode(node.parent);
     }
   }
 
   /**
- * Removes the specified object from the Quadtree.
- * @param object - The object to remove.
+ * Removes the specified boundingBox from the Quadtree.
+ * @param boundingBox - The boundingBox to remove.
  */
-  public removeObject(object: BoudingBox): void {
-    // Traverse the Quadtree to find the node containing the object to remove
-    const node = this.findNode(object);
+  public removeObject(boundingBox: BoundingBoxInterface): void {
+    // Traverse the Quadtree to find the node containing the boundingBox to remove
+    const node = this.findNode(boundingBox);
 
     if (node) {
-      // Remove the object from the node's list of objects
-      node.objects.remove(object);
+      // Remove the boundingBox from the node's list of boundingBoxes
+      node.boundingBoxes.remove(boundingBox);
 
       // If the node is now empty and hasno children, remove it from the Quadtree
-      if (node.objects.getSize() === 0 && node.children.length === 0) {
+      if (node.boundingBoxes.size === 0 && node.children.length === 0) {
         this.removeEmptyNode(node);
       }
     }
   }
 
-  // public updateObject(object: BoudingBox): void {
-  //   // Traverse the Quadtree to find the node containing the object to update
-  //   const node = this.findNode(object);
-
-
-
-
-
   /**
- * Determines the index of the child Quadtree node in which an object belongs, based on the object's boundaries and the current node's bounds.
+ * Determines the index of the child Quadtree node in which an boundingBox belongs, based on the boundingBox's boundaries and the current node's bounds.
  * The returned index corresponds to the child node at that position in the current node's children array, as follows:
  *
- *   1  |  2
+ *   0  |  1
  *  ____|____
  *      |
- *   3  |  4
+ *   2  |  3
  *  ____|____
  *
- * If the object is located in the boundary lines of the current node but not fully contained within any of the child nodes, returns -1.
+ * If the boundingBox is located in the boundary lines of the current node but not fully contained within any of the child nodes, returns -1.
  *
- * @param object - The object to be indexed.
- * @returns The index of the child Quadtree node in which the object belongs, or -1 if the object is not fully contained within any of the child nodes.
+ * @param boundingBox - The boundingBox to be indexed.
+ * @returns The index of the child Quadtree node in which the boundingBox belongs, or -1 if the boundingBox is not fully contained within any of the child nodes.
  */
-  public getIndex(object: BoudingBox) {
-    const { x, y, width, height } = object;
+  public getIndex(boundingBox: BoundingBoxInterface) {
+    const { x, y, width, height } = boundingBox;
     const verticalMidpoint = this.bounds.x + (this.bounds.width / 2);
     const horizontalMidpoint = this.bounds.y + (this.bounds.height / 2);
 
-    // BoudingBox can completely fit within quadrants bool variables
+    // BoundingBoxInterface can completely fit within quadrants bool variables
     const topQuadrant = (y < horizontalMidpoint && y + height < horizontalMidpoint);
     const leftQuadrant = (x < verticalMidpoint && x + width < verticalMidpoint);
     const rightQuadrant = (x > verticalMidpoint);
@@ -436,21 +356,18 @@ export default class Quadtree {
     const objectCenterX = x + width / 2;
     const objectCenterY = y + height / 2;
     if (objectCenterX >= this.bounds.x && objectCenterX <= this.bounds.x + this.bounds.width &&
-      objectCenterY >= this.bounds.y && objectCenterY <= this.bounds.y + this.bounds.height){
+      objectCenterY >= this.bounds.y && objectCenterY <= this.bounds.y + this.bounds.height) {
       return -1;
-      }
-    // if (!this.containsObject(object)) {
-    //   return -1;
-    // }
+    }
+    
     return -1;
   }
 
   public clear() {
-    this.objects.clear();
+    this.boundingBoxes.clear();
     this.children.forEach(child => child.clear());
     this.children = [];
   }
-
 
   public render(ctx: CanvasRenderingContext2D): void {
     // Define the colors for different levels
@@ -459,12 +376,20 @@ export default class Quadtree {
     const renderNode = (node: Quadtree) => {
       // Determine the color for this node based on its depth
       // const depth = this.maxDepth - node.level;
-      ctx.fillStyle = "red";
+      ctx.fillStyle = "green";
 
       if (node.children.length === 0) {
-        // Draw a rectangle for each object in this leaf node
-        for (const object of node.objects) {
-          ctx.fillRect(object.data.x, object.data.y, object.data.width, object.data.height);
+        // Draw a rectangle for each boundingBox in this leaf node
+        for (const boundingBox of node.boundingBoxes) {
+          if (node.retrieveIntersectingBoundingBoxes(boundingBox.data)) {
+            ctx.fillStyle = "red";
+            ctx.fillRect(boundingBox.data.x, boundingBox.data.y, boundingBox.data.width, boundingBox.data.height);
+          }
+          else {
+            ctx.fillRect(boundingBox.data.x, boundingBox.data.y, boundingBox.data.width, boundingBox.data.height);
+
+          }
+
         }
       } else {
         // Render the child nodes recursively
@@ -477,12 +402,35 @@ export default class Quadtree {
       ctx.strokeStyle = 'black';
       ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
 
-      // Draw a label for this node showing the number of objects it contains
+      // Draw a label for this node showing the number of boundingBoxes it contains
       ctx.fillStyle = 'black';
       ctx.font = '12px Arial';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      ctx.fillText(node.objects.getSize().toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
+      ctx.fillText(node.boundingBoxes.size.toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
+    }
+
+    // Render the root node and its children recursively
+    renderNode(this);
+  }
+
+  public renderTree(ctx: CanvasRenderingContext2D): void {
+    const renderNode = (node: Quadtree) => {
+      // Draw a rectangle for this node
+      ctx.strokeStyle = 'black';
+      ctx.strokeRect(node.bounds.x, node.bounds.y, node.bounds.width, node.bounds.height);
+
+      // Draw a label for this node showing the number of boundingBoxes it contains
+      ctx.fillStyle = 'black';
+      ctx.font = '12px Arial';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillText(node.boundingBoxes.size.toString(), node.bounds.x + node.bounds.width / 2, node.bounds.y + node.bounds.height / 2);
+
+      // Render the child nodes recursively
+      for (const child of node.children) {
+        renderNode(child);
+      }
     }
 
     // Render the root node and its children recursively
@@ -508,90 +456,90 @@ export default class Quadtree {
 
 
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-// const object = { x: 10, y: 10, width: 20, height: 20 };
-// console.log(quadtree.containsObject(object)); // should output true
+// const boundingBox = { x: 10, y: 10, width: 20, height: 20 };
+// console.log(quadtree.containsObject(boundingBox)); // should output true
 
 // const quadtree2 = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
 // const object2 = { x: 150, y: 150, width: 20, height: 20 };
-// console.log(quadtree.intersectsObject(object2)); // should output true
+// console.log(quadtree.intersects(object2)); // should output true
 
 // const canvas = document.createElement('canvas');
 // const quadtree = new Quadtree({ x: 0, y: 0, width: canvas.width, height: canvas.height }, 10, 4);
-// const objects: BoudingBox[] = [
+// const boundingBoxes: BoundingBoxInterface[] = [
 //   { x: 10, y: 10, width: 10, height: 10 },
 //   { x: 30, y: 30, width: 10, height: 10 },
 //   { x: 50, y: 50, width: 10, height: 10 },
 //   { x: 70, y: 70, width: 10, height: 10 },
 //   { x: 90, y: 90, width: 10, height: 10 }
 // ];
-// for (const obj of objects) {
+// for (const obj of boundingBoxes) {
 //   quadtree.insert(obj);
 // }
 
-// const searchArea: BoudingBox = { x: 20, y: 20, width: 60, height: 60 };
+// const searchArea: BoundingBoxInterface = { x: 20, y: 20, width: 60, height: 60 };
 // const searchResults = quadtree.retrieveObjects(searchArea);
 // console.log(searchResults);
 
 // const qt = new Quadtree({x: 0, y: 0, width: 100, height: 100}, 4, 10);
 
-// // Add some objects to the Quadtree
-// const objects = [
+// // Add some boundingBoxes to the Quadtree
+// const boundingBoxes = [
 //   {x: 10, y: 10, width: 10, height: 10},
 //   {x: 20, y: 20, width: 10, height: 10},
 //   {x: 30, y: 30, width: 10, height: 10},
 //   {x: 40, y: 40, width: 10, height: 10},
 //   {x: 50, y: 50,  width: 10, height: 10},
 // ];
-// objects.forEach((obj) => qt.insert(obj));
+// boundingBoxes.forEach((obj) => qt.insert(obj));
 
-// // Remove an object that is in the Quadtree
-// const objToRemove = objects[2];
+// // Remove an boundingBox that is in the Quadtree
+// const objToRemove = boundingBoxes[2];
 // qt.removeObject(objToRemove);
 
 // console.log(objToRemove); // should output null
-// // Check if the object was removed
+// // Check if the boundingBox was removed
 // if (qt.findNode(objToRemove) !== null) {
-//   console.log('Error: object was not removed');
+//   console.log('Error: boundingBox was not removed');
 // }
 
 // // Check if the node was correctly removed
-// if (qt.findNode(objects[0])?.parent !== null) {
+// if (qt.findNode(boundingBoxes[0])?.parent !== null) {
 //   console.log('Error: empty node was not removed');
 // }
 
-// // Remove all objects from the Quadtree
-// objects.forEach((obj) => qt.removeObject(obj));
+// // Remove all boundingBoxes from the Quadtree
+// boundingBoxes.forEach((obj) => qt.removeObject(obj));
 
 // // Check if the Quadtree is empty
-// if (qt.findNode({x: 0, y: 0, width: 100, height: 100})?.objects.getSize() !== 0) {
+// if (qt.findNode({x: 0, y: 0, width: 100, height: 100})?.boundingBoxes.getSize() !== 0) {
 //   console.log('Error: Quadtree is not empty');
 // }
 
 // // Create a new Quadtree
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-// // Add objects to the Quadtree
+// // Add boundingBoxes to the Quadtree
 // const obj1 = { x: 10, y: 10, width: 10, height: 10 };
 // const obj2 = { x: 50, y: 50, width: 10, height: 10 };
 // quadtree.insert(obj1);
 // quadtree.insert(obj2);
 
-// // Verify that the objects are in the Quadtree
+// // Verify that the boundingBoxes are in the Quadtree
 // console.log(quadtree.containsObject(obj1)); // should log true
 // console.log(quadtree.containsObject(obj2)); // should log true
 
-// // Remove an object from the Quadtree
+// // Remove an boundingBox from the Quadtree
 // quadtree.removeObject(obj1);
-// console.log(quadtree.objects.getSize()); // should log 1
-// // Verify that the object was removed from the Quadtree
+// console.log(quadtree.boundingBoxes.getSize()); // should log 1
+// // Verify that the boundingBox was removed from the Quadtree
 // console.log(quadtree.containsObject(obj1)); // should log false
 // console.log(quadtree.containsObject(obj2)); // should log true
-// console.log(quadtree.objects.contains(obj1)); // should log false
+// console.log(quadtree.boundingBoxes.contains(obj1)); // should log false
 
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 4, 10);
-// const object1: BoudingBox = { x: 10, y: 10, width: 10, height: 10 };
-// const object2: BoudingBox = { x: 60, y: 10, width: 10, height: 10 };
-// const object3: BoudingBox = { x: 10, y: 60, width: 10, height: 10 };
-// const object4: BoudingBox = { x: 100, y: 100, width: 10, height: 10 };
+// const object1: BoundingBoxInterface = { x: 10, y: 10, width: 10, height: 10 };
+// const object2: BoundingBoxInterface = { x: 60, y: 10, width: 10, height: 10 };
+// const object3: BoundingBoxInterface = { x: 10, y: 60, width: 10, height: 10 };
+// const object4: BoundingBoxInterface = { x: 100, y: 100, width: 10, height: 10 };
 // for (const obj of [object1, object2, object3, object4]) {
 //   quadtree.insert(obj);
 // }
@@ -599,10 +547,10 @@ export default class Quadtree {
 // console.log(quadtree.getIndex(object2)); // should return 1
 // console.log(quadtree.getIndex(object3)); // should return 2
 // console.log(quadtree.getIndex(object4)); // should return 3
-// console.log(quadtree.objects); // should output 4 objects
+// console.log(quadtree.boundingBoxes); // should output 4 boundingBoxes
 // console.log(quadtree.containsObject(object1)); // should output true
 // console.log(quadtree.removeObject(object1)); // should output true
-// console.log(quadtree.objects); // should output 3 objects
+// console.log(quadtree.boundingBoxes); // should output 3 boundingBoxes
 
 // const quadtree = new Quadtree({ x: 0, y: 0, width: 1920, height: 1080 }, 4, 10);
 // for (let i = 0; i < 100; i++) {
@@ -617,22 +565,22 @@ export default class Quadtree {
 // }
 // console.log(list.getSize()); // should output 1000
 
-// create a quadtree and insert some objects
+// create a quadtree and insert some boundingBoxes
 const quadtree = new Quadtree({ x: 0, y: 0, width: 100, height: 100 }, 10);
-const objects = [
+const boundingBoxes = [
   { x: 10, y: 10, width: 10, height: 10 },
   { x: 30, y: 30, width: 10, height: 10 },
   { x: 50, y: 50, width: 10, height: 10 },
   { x: 70, y: 70, width: 10, height: 10 },
   { x: 90, y: 90, width: 10, height: 10 },
 ];
-for (const obj of objects) {
+for (const obj of boundingBoxes) {
   quadtree.insert(obj);
 }
-// query for objects within a range
-// const objectsInRange = quadtree.retrieveCollisions({ x: 0, y: 0, width: 100, height: 100 });
+// query for boundingBoxes within a range
+// const objectsInRange = quadtree.retrieveIntersectingBoundingBoxes({ x: 0, y: 0, width: 100, height: 100 });
 // print the results
 // console.log(objectsInRange);
 console.log(quadtree)
-// objects.forEach((obj) => {obj.x += 50, obj.y += 50; quadtree.updateObject(obj);});
+// boundingBoxes.forEach((obj) => {obj.x += 50, obj.y += 50; quadtree.updateObject(obj);});
 // console.log(quadtree)

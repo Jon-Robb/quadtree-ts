@@ -87,27 +87,38 @@ interface ObjectWithToString {
     toString(): string;
 }
 export default class DoublyLinkedList<T> {
-    private head: DoublyLinkedListNode<T> | null;
-    private tail: DoublyLinkedListNode<T> | null;
-    private size: number;
+    private _head: DoublyLinkedListNode<T> | null;
+    private _tail: DoublyLinkedListNode<T> | null;
+    private _size: number;
 
     constructor() {
-        this.head = null;
-        this.tail = null;
-        this.size = 0;
+        this._head = null;
+        this._tail = null;
+        this._size = 0;
     }
 
-    public getHead(): DoublyLinkedListNode<T> | null {
-        return this.head;
+    public get head(): DoublyLinkedListNode<T> | null {
+        return this._head;
     }
 
-    public getTail(): DoublyLinkedListNode<T> | null {
-        return this.tail;
+    public set head(node: DoublyLinkedListNode<T> | null) {
+        this._head = node;
+    }
+
+    public get tail(): DoublyLinkedListNode<T> | null {
+        return this._tail;
+    }
+
+    public set tail(node: DoublyLinkedListNode<T> | null) {
+        this._tail = node;
     }
     
+    public get size(): number {
+        return this._size;
+    }
 
-    public getSize(): number {
-        return this.size;
+    public set size(size: number) {
+        this._size = size;
     }
 
     public isEmpty(): boolean {
@@ -228,7 +239,7 @@ export default class DoublyLinkedList<T> {
             return null;
         }
         const removedNode = this.head;
-        if (this.getSize() === 1) {
+        if (this.size === 1) {
             this.head = null;
             this.tail = null;
         } else {
@@ -245,7 +256,7 @@ export default class DoublyLinkedList<T> {
             return null;
         }
         const removedNode = this.tail;
-        if (this.getSize() === 1) {
+        if (this.size === 1) {
             this.head = null;
             this.tail = null;
         } else {
@@ -360,7 +371,7 @@ export default class DoublyLinkedList<T> {
                 }
                 current.prev = null;
                 current.next = null;
-                this.size--;
+                --this.size;
                 return true;
             }
             current = current.next;

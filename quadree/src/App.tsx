@@ -6,7 +6,7 @@ import QuadtreeRenderer from './components/QuadtreeRenderer';
 function App() {
   const points  = [] 
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 1000; i++) {
     const x = Math.random() * 800
     const y = Math.random() * 600
     const width = Math.random() * 32 + 10
@@ -16,7 +16,7 @@ function App() {
   
   return (
     <div className="App">
-      <QuadtreeRenderer width={800} height={600} maxDepth={4} maxPoints={10} points={points}/>
+      <QuadtreeRenderer width={800} height={600} maxDepth={4} maxPoints={5} points={points}/>
       
     </div>
   )
