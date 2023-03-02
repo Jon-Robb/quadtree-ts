@@ -7,16 +7,16 @@ function App() {
   const points  = [] 
 
   for (let i = 0; i < 10; i++) {
-    const x = Math.random() * 1850
-    const y = Math.random() * 1000
-    const width = Math.random() * 100 + 50
-    const height = Math.random() * 100 + 50
+    const x = Math.random() * 800
+    const y = Math.random() * 600
+    const width = Math.random() * 32 + 10
+    const height = Math.random() * 32 + 10
     points.push({ x, y, width, height })
   }
   
   return (
     <div className="App">
-      <QuadtreeRenderer width={1920} height={1080} maxDepth={4} maxPoints={10} points={points}/>
+      <QuadtreeRenderer width={800} height={600} maxDepth={4} maxPoints={10} points={points}/>
       
     </div>
   )
